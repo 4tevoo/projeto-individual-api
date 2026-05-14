@@ -37,6 +37,7 @@ public class Veiculo {
     private String placa;
 
     @NotNull
+    @DecimalMin("0.0") // desconto de no mínimo 0%, ou seja, sem desconto, seguindo o Swagger
     private Double maximoDesconto;
 
     @NotNull
