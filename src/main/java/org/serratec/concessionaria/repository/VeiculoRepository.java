@@ -15,7 +15,8 @@ public interface VeiculoRepository extends JpaRepository<Veiculo, UUID> {
     // se ele não achar nenhum veiculo com essa placa, por ser único.
     // pra evitar retorno de null
 
-    // basicamente, "me diz se tem tal coisa e se não tiver nem me responde"
+    // (comment v2 pq errei no entendimento dessa parte)
+    // basicamente, "me mostra o que tem nessa caixa, seja ela vazia ou cheia"
     Optional<Veiculo> findByPlaca(String placa);
 
     // marca e modelo tem de monte, ainda mais os populares.

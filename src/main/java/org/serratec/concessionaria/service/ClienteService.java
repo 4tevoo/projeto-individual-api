@@ -1,6 +1,8 @@
 package org.serratec.concessionaria.service;
 
 import org.serratec.concessionaria.entity.Cliente;
+import org.serratec.concessionaria.exception.RegraNegocioException;
+import org.serratec.concessionaria.exception.ResourceNotFoundException;
 import org.serratec.concessionaria.repository.ClienteRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -34,10 +36,11 @@ public class ClienteService {
     }
 
     // aqui é o buscador único
-    public Optional<Cliente> buscarPorId(UUID id) {
+    public Cliente buscarPorId(UUID id) {
         // serve para quando o Controller pedir os detalhes de UM cliente específico
         // vou fazer o Controller ainda, aguarde teacher
-        return repository.findById(id);
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente com o ID " + id + " não foi localizado no sistema."));
     }
 
     // aqui é o save
@@ -48,7 +51,7 @@ public class ClienteService {
             // se o CPF existe, ele trava tudo e joga o erro
             // esse erro vai ser substituído pelo o que tiver no exception, que ainda vou fazer
             // "work in process" como dizem
-            throw new RuntimeException("OW OW OW PARA AÍ!!! tem... dois de você?!");
+            throw new RegraNegocioException("Não é possível cadastrar: O CPF " + cliente.getCpf() + " já pertence a um cliente ativo.");
         }
         // se passou pelo if, o caminho tá livre pra salvar no banco
         return repository.save(cliente);
@@ -57,14 +60,9 @@ public class ClienteService {
     // aqui é o carrasco, ele vai deletar o cliente... tadinho
     public void deletar(UUID id) {
         // primeiro vê se existe antes de apagar
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-        } else {
-            // se não existir... como apaga o inexistente? reflexões filosóficas na madrugada
-            throw new RuntimeException("Scooby-Doo, cadê você, meu filho?");
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Falha ao deletar: O ID " + id + " de cliente não existe.");
         }
+        repository.deleteById(id);
     }
 }
-
-// ps.: calma, não vão ser essas as frases de exception de verdade, WORK IN PROCESS!!
-// vou trocar pros exceptions quando eu chegar lá, é que eu sou lento...

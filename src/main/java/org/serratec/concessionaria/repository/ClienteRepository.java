@@ -16,7 +16,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
     // se ele não achar ninguém com esse cpf, por ser único.
     // pra evitar retorno de null
 
-    // basicamente, "me diz se tem tal coisa e se não tiver nem me responde"
+    // (comment v2 pq errei no entendimento dessa parte)
+    // basicamente, "me mostra o que tem nessa caixa, seja ela vazia ou cheia"
     Optional<Cliente> findByCpf(String cpf);
 
     // busquinha por nome.

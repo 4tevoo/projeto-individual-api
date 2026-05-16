@@ -27,17 +27,20 @@ public class Cliente {
 
     // O resto é padrão né, não vou ocupar muitas linhas com comentários
     @NotBlank
+    @Column(nullable=false)
     private String nome;
 
     @NotBlank
+    @Column(nullable=false)
     private String telefone;
 
     @NotBlank
-    @Column(unique = true)
+    @Column(unique = true, nullable=false)
     private String cpf;
 
     @NotBlank
     @Email
+    @Column(nullable=false)
     private String email;
 
     // um cliente pode ter vários veículos etc
