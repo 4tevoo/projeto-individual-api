@@ -38,5 +38,5 @@ API de desenvolvimento/gerenciamento de clientes e veículos de uma concessioná
 * `PUT /api/v1/veiculo/{id}` - Atualizar dados do veículo / Efetuar venda.
 * `DELETE /api/v1/veiculo/{id}` - Remover veículo.
 
-_Made by Estêvão Viana Cunha, aka, Tevo (quase todos os professores não me identificam meu github pelo user então deixei aqui de aviso)_
+_Made by Estêvão Viana Cunha, aka, Tevo (quase todos os professores não me identificam pelo meu user do github então deixei aqui de aviso)_
 
