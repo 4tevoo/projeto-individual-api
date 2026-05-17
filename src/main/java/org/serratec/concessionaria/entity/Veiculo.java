@@ -1,6 +1,7 @@
 package org.serratec.concessionaria.entity;
 
 // Imports necessários
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -57,5 +58,6 @@ public class Veiculo {
     // muitos carros podem ter um dono muito rico, aquele cliente que a loja gosta
     @ManyToOne
     @JoinColumn(name = "cliente_id")
+    @JsonBackReference // corta a referencia infinita na renderização do json
     private Cliente cliente;
 }

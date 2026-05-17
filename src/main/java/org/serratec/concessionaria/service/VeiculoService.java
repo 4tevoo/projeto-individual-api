@@ -1,22 +1,27 @@
 package org.serratec.concessionaria.service;
 
+import org.serratec.concessionaria.entity.Cliente;
 import org.serratec.concessionaria.entity.Veiculo;
 import org.serratec.concessionaria.exception.RegraNegocioException;
 import org.serratec.concessionaria.exception.ResourceNotFoundException;
+import org.serratec.concessionaria.model.VeiculoInsert;
+import org.serratec.concessionaria.model.VeiculoUpdateInput;
+import org.serratec.concessionaria.repository.ClienteRepository;
 import org.serratec.concessionaria.repository.VeiculoRepository;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class VeiculoService {
 
-    // mantendo aquele padrãozinho Jaé
     private final VeiculoRepository repository;
+    private final ClienteRepository clienteRepository;
 
-    public VeiculoService(VeiculoRepository repository) {
+    public VeiculoService(VeiculoRepository repository, ClienteRepository clienteRepository) {
         this.repository = repository;
+        this.clienteRepository = clienteRepository;
     }
 
     // listando de acordo com os filtros que foi requisitado no Swagger
@@ -38,8 +43,29 @@ public class VeiculoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Recurso não encontrado: Veículo com o ID fornecido não existe."));
     }
 
-    public Veiculo salvar(Veiculo veiculo) {
-        // antes de salvar tem que ver se ta dentro das regras de negócio
+    public Veiculo salvar(VeiculoInsert dto) {
+
+        // primeiro vendo se o dono do carro existe
+        Cliente clienteDono = clienteRepository.findById(dto.clienteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Não foi possível cadastrar o veículo: O cliente com o ID informado não foi encontrado."));
+
+        // transforma o dto em entity
+        Veiculo veiculo = new Veiculo();
+        veiculo.setMarca(dto.marca());
+        veiculo.setModelo(dto.modelo());
+        veiculo.setAno(dto.ano());
+        veiculo.setValor(dto.valor());
+        veiculo.setPlaca(dto.placa());
+        veiculo.setMaximoDesconto(dto.maximoDesconto());
+
+        // bota o cliente no carro... não literalmente
+        veiculo.setCliente(clienteDono);
+
+        // faz ele nascer disponivel no estoque caso nao seja por alguma razão, double check né
+        veiculo.setVendido(false);
+        veiculo.setValorVenda(null);
+
+        // roda a validação
         validarRegrasDeVenda(veiculo);
 
         // vê se tão burlando as regrinhas do DETRAN clonando placa
@@ -47,29 +73,34 @@ public class VeiculoService {
             throw new RegraNegocioException("Dados inválidos: A placa informada já está cadastrada no sistema.");
         }
 
+        // salva no banco
         return repository.save(veiculo);
     }
-    public Veiculo atualizar(UUID id, Veiculo veiculoAtualizado) {
+
+    public Veiculo atualizar(UUID id, VeiculoUpdateInput dto) {
+
+        // vê se ta no banco
         Veiculo veiculoExistente = buscarPorId(id);
 
-        if (!veiculoExistente.getPlaca().equals(veiculoAtualizado.getPlaca())) {
-            if (repository.findByPlaca(veiculoAtualizado.getPlaca()).isPresent()) {
-                throw new RegraNegocioException("Dados inválidos: A nova placa informada já pertence a outro veículo.");
-            }
-        }
-        validarRegrasDeVenda(veiculoAtualizado);
-        veiculoExistente.setMarca(veiculoAtualizado.getMarca());
-        veiculoExistente.setModelo(veiculoAtualizado.getModelo());
-        veiculoExistente.setAno(veiculoAtualizado.getAno());
-        veiculoExistente.setValor(veiculoAtualizado.getValor());
-        veiculoExistente.setPlaca(veiculoAtualizado.getPlaca());
-        veiculoExistente.setMaximoDesconto(veiculoAtualizado.getMaximoDesconto());
-        veiculoExistente.setVendido(veiculoAtualizado.getVendido());
-        veiculoExistente.setValorVenda(veiculoAtualizado.getValorVenda());
-        veiculoExistente.setCliente(veiculoAtualizado.getCliente());
+        // atualiza os campos permitidos no dto
+        veiculoExistente.setMarca(dto.marca());
+        veiculoExistente.setModelo(dto.modelo());
+        veiculoExistente.setAno(dto.ano());
+        veiculoExistente.setValor(dto.valor());
+        veiculoExistente.setMaximoDesconto(dto.maximoDesconto());
+        veiculoExistente.setVendido(dto.vendido());
+        veiculoExistente.setValorVenda(dto.valorVenda());
 
+        // placa e cliente não muda pra seguir o que o swagger manda
+
+        // roda a validação de desconto e preço
+        validarRegrasDeVenda(veiculoExistente);
+
+        // SALVE!
         return repository.save(veiculoExistente);
+
     }
+
     // aqui é a validação, as regras são:
     // não da pra vender o que ja foi vendido
     // o valor não pode exceder o minimo e o calculo é depois de considerar o desconto (vendedor não pode fazer uma caridade excessiva, o sistema é mau)

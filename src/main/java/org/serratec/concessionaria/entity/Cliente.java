@@ -4,6 +4,7 @@
 // já que não vai ter apresentação (ainda bem, tenho vergonha)
 package org.serratec.concessionaria.entity; // package que é o caminho, igual no projeto de java/poo
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*; // carinha do JPA e Hibernate, o que joga pro bd
 import jakarta.validation.constraints.*; // o carinha que verifica as parada, validação
 import lombok.Data; // o carinha que facilita nossa vida gerando getter e setter na execução
@@ -44,6 +45,14 @@ public class Cliente {
     private String email;
 
     // um cliente pode ter vários veículos etc
-    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "cliente")
+    @JsonManagedReference // descobri quando fui dar uma olhada sobre o cascade e é melhor não usar
+    // esse @JsonManagedReference indica que o Cliente gerencia o lado da relação no JSON
+    // serve tb pra impedir StackOverflowError pq o Cliente tem uma lista de Veiculo
+    // e o Veiculo tem uma lista de cliente
+    // quando o spring tenta transformar o Cliente em JSON, o Cliente chama os Veículos que chamam o Cliente dono que chama os Veículos...
+    // da um loop. esse @JsonManagedReference e o @JsonBackReference (no Veiculo) impedem isso, eu acho
+
+    // pro escopo desse trabalho, funciona perfeitamente. em um escopo bem maior, talvez não fosse uma boa depender inteiramente nessas anotações (usar DTOs de saída, pelo o que vi pesquisando)
     private List<Veiculo> veiculos;
 }

@@ -3,10 +3,10 @@ package org.serratec.concessionaria.service;
 import org.serratec.concessionaria.entity.Cliente;
 import org.serratec.concessionaria.exception.RegraNegocioException;
 import org.serratec.concessionaria.exception.ResourceNotFoundException;
+import org.serratec.concessionaria.model.ClienteInput;
 import org.serratec.concessionaria.repository.ClienteRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -44,15 +44,22 @@ public class ClienteService {
     }
 
     // aqui é o save
-    public Cliente salvar(Cliente cliente) {
+    public Cliente salvar(ClienteInput dto) {
         // antes de salvar, ele usa o Repository pra ver se aquele CPF já existe
         // usando o isPresent pra ver se já tem pelo retorno to findByCpf
-        if (repository.findByCpf(cliente.getCpf()).isPresent()) {
+        if (repository.findByCpf(dto.cpf()).isPresent()) {
             // se o CPF existe, ele trava tudo e joga o erro
             // esse erro vai ser substituído pelo o que tiver no exception, que ainda vou fazer
             // "work in process" como dizem
-            throw new RegraNegocioException("Não é possível cadastrar: O CPF " + cliente.getCpf() + " já pertence a um cliente ativo.");
+            throw new RegraNegocioException("Não é possível cadastrar: O CPF " + dto.cpf() + " já pertence a um cliente ativo.");
         }
+        // cria o cliente, transformando dto em entity
+        Cliente cliente = new Cliente();
+        cliente.setNome(dto.nome());
+        cliente.setTelefone(dto.telefone());
+        cliente.setCpf(dto.cpf());
+        cliente.setEmail(dto.email());
+
         // se passou pelo if, o caminho tá livre pra salvar no banco
         return repository.save(cliente);
     }
