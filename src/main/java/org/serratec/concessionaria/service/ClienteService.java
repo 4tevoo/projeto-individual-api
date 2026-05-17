@@ -1,6 +1,7 @@
 package org.serratec.concessionaria.service;
 
 import org.serratec.concessionaria.entity.Cliente;
+import org.serratec.concessionaria.exception.EntidadeDuplicadaException;
 import org.serratec.concessionaria.exception.RegraNegocioException;
 import org.serratec.concessionaria.exception.ResourceNotFoundException;
 import org.serratec.concessionaria.model.ClienteInput;
@@ -22,14 +23,20 @@ public class ClienteService {
     // aqui é o nosso filtro
     public List<Cliente> listar(String nome, String cpf) {
         if (cpf != null) {
+            Cliente cliente = repository.findByCpf(cpf)
+                    .orElseThrow(() -> new ResourceNotFoundException("Cliente com o CPF " + cpf + " não foi localizado no sistema."));
             // o findByCpf retorna um CPF né
             // o .stream().toList() transforma esse retorno em uma lista
             // que aí mantem o padrão de retorno do método (que é uma List)
-            return repository.findByCpf(cpf).stream().toList();
+            return List.of(cliente);
         }
         // se não tem CPF mas tem Nome, usa a busca LIKE (Containing)
         if (nome != null) {
-            return repository.findByNomeContainingIgnoreCase(nome);
+            List<Cliente> resultado = repository.findByNomeContainingIgnoreCase(nome);
+            if (resultado.isEmpty()) {
+                throw new ResourceNotFoundException("Nenhum cliente encontrado com o nome contendo: " + nome);
+            }
+            return resultado;
         }
         // se o cara só deu um GET sem filtro nenhum, aí manda a lista compelta
         return repository.findAll();
@@ -51,7 +58,7 @@ public class ClienteService {
             // se o CPF existe, ele trava tudo e joga o erro
             // esse erro vai ser substituído pelo o que tiver no exception, que ainda vou fazer
             // "work in process" como dizem
-            throw new RegraNegocioException("Não é possível cadastrar: O CPF " + dto.cpf() + " já pertence a um cliente ativo.");
+            throw new EntidadeDuplicadaException("Não é possível cadastrar: O CPF " + dto.cpf() + " já pertence a um cliente ativo.");
         }
         // cria o cliente, transformando dto em entity
         Cliente cliente = new Cliente();

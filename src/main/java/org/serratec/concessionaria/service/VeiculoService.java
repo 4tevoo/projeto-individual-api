@@ -2,6 +2,7 @@ package org.serratec.concessionaria.service;
 
 import org.serratec.concessionaria.entity.Cliente;
 import org.serratec.concessionaria.entity.Veiculo;
+import org.serratec.concessionaria.exception.EntidadeDuplicadaException;
 import org.serratec.concessionaria.exception.RegraNegocioException;
 import org.serratec.concessionaria.exception.ResourceNotFoundException;
 import org.serratec.concessionaria.model.VeiculoInsert;
@@ -27,13 +28,23 @@ public class VeiculoService {
     // listando de acordo com os filtros que foi requisitado no Swagger
     public List<Veiculo> listar(String placa, String marca, String modelo) {
         if (placa != null) {
-            return repository.findByPlaca(placa).stream().toList();
+            Veiculo veiculo = repository.findByPlaca(placa)
+                    .orElseThrow(() -> new ResourceNotFoundException("Veículo com a placa " + placa + " não foi localizado no sistema."));
+            return List.of(veiculo);
         }
         if (marca != null) {
-            return repository.findByMarcaContainingIgnoreCase(marca);
+            List<Veiculo> resultado = repository.findByMarcaContainingIgnoreCase(marca);
+            if (resultado.isEmpty()) {
+                throw new ResourceNotFoundException("Nenhum veículo encontrado para a marca: " + marca);
+            }
+            return resultado;
         }
         if (modelo != null) {
-            return repository.findByModeloContainingIgnoreCase(modelo);
+            List<Veiculo> resultado = repository.findByModeloContainingIgnoreCase(modelo);
+            if (resultado.isEmpty()) {
+                throw new ResourceNotFoundException("Nenhum veículo encontrado para o modelo: " + modelo);
+            }
+            return resultado;
         }
         return repository.findAll();
     }
@@ -70,7 +81,7 @@ public class VeiculoService {
 
         // vê se tão burlando as regrinhas do DETRAN clonando placa
         if (repository.findByPlaca(veiculo.getPlaca()).isPresent()) {
-            throw new RegraNegocioException("Dados inválidos: A placa informada já está cadastrada no sistema.");
+            throw new EntidadeDuplicadaException("Dados inválidos: A placa informada já está cadastrada no sistema.");
         }
 
         // salva no banco

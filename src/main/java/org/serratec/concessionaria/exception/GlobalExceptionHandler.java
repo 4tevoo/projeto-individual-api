@@ -100,4 +100,15 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT).body(erro);
     }
+    // adicionando uma exception junto com as que eu ESQUECI DE COLOCAR NOS SERVICES
+    // minha afobação  pra terminar ontem de noite me fez esquecer de tratar erros
+    @ExceptionHandler(EntidadeDuplicadaException.class)
+    public ResponseEntity<ErroResposta> tratarEntidadeDuplicada(EntidadeDuplicadaException ex) {
+        ErroResposta erro = new ErroResposta(
+                HttpStatus.CONFLICT.value(), // Código 409
+                "Conflict",
+                ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    }
 }
